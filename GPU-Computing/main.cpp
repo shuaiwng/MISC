@@ -1,22 +1,30 @@
 // main.cpp
-#include <stdlib.h>
-#include <stdio.h>
 #include <iostream>
+#include <chrono>
 #include "kernel.h"
 
 using namespace std;
-
+using namespace std::chrono;
 
 int main() {
-    const int n = 5;
-    float h_A[n] = { 0., 1., 2., 3., 4. };
-    float h_B[n] = { 5., 4., 3., 2., 1. };
+    const int n = 600000;
+    float h_A[n] = {1};
+    float h_B[n] = {2};
     float h_C[n];
 
+    // GPU
     cuda_vec_add(h_A, h_B, h_C, n);
+    cout << "h_C[0] = " << h_C[0] << endl;
 
-    printf("{ 0.0, 1.0, 2.0, 3.0, 4.0 } + { 5.0, 4.0, 3.0, 2.0, 1.0 } = { %0.01f, %0.01f, %0.01f, %0.01f, %0.01f }\n",
-        h_C[0], h_C[1], h_C[2], h_C[3], h_C[4]);
+    // CPU
+    auto beg_cpu = steady_clock::now();
+    for (int i = 0; i < n; i++){
+        h_C[i] = h_A[i] + h_B[i];
+    }
+    auto end_cpu = steady_clock::now();
+
+    cout << "Elapsed Time [CPU]: " << std::chrono::duration_cast<std::chrono::microseconds>(end_cpu-beg_cpu).count()
+        << " [us]" << endl;
 
     return 0;
 }

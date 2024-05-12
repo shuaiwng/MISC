@@ -1,7 +1,12 @@
 // kernel.cu
 #include "kernel.h"
+#include <iostream>
 #include <cuda.h>
 #include <cuda_runtime.h>
+#include <chrono>
+
+using namespace std;
+using namespace std::chrono;
 
 __global__ void vec_add_kernel(float *a, float *b, float *c, int n) {
     int i = threadIdx.x + blockDim.x * blockIdx.x;
@@ -18,7 +23,12 @@ int cuda_vec_add(float *h_a, float *h_b, float *h_c, int n) {
     cudaMemcpy(d_a, h_a, n*sizeof(float), cudaMemcpyHostToDevice);
     cudaMemcpy(d_b, h_b, n*sizeof(float), cudaMemcpyHostToDevice);
 
-    vec_add_kernel<< <(n-1)/256+1,256>> >(d_a, d_b, d_c, n);
+    auto beg_cuda = steady_clock::now();
+    vec_add_kernel<<<1,1>>>(d_a, d_b, d_c, n);
+    auto end_cuda = steady_clock::now();
+
+    cout << "Elapsed Time [CUDA]: " << std::chrono::duration_cast<std::chrono::microseconds>(end_cuda-beg_cuda).count()
+        << " [us]" << endl;
 
     cudaMemcpy(h_c, d_c, n*sizeof(float), cudaMemcpyDeviceToHost);
 
