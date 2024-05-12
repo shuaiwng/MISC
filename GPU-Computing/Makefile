@@ -1,7 +1,7 @@
 CXX=g++
 NVCC=nvcc
 APP=test
-CUDAFLAGS=-std=c++11 -c
+CFLAGS=-std=c++11 -c
 CUDA_LIBS=-lcudart
 CUDA_LIB_DIR=-L/opt/cuda/lib64
 CUDA_INC_DIR=-I/opt/cuda/include
@@ -16,7 +16,7 @@ main.o: main.cpp
 	$(CXX) -c $<
 
 kernel.o: kernel.cu
-	$(NVCC) $(CUDAFLAGS) $(CUDA_INC_DIR) $<
+	$(NVCC) $(CFLAGS) $(CUDA_INC_DIR) $<
 
 
 clean:
