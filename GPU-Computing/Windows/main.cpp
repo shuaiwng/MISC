@@ -1,30 +1,51 @@
-// main.cpp
-#include <iostream>
-#include <chrono>
 #include "kernel.h"
+#include <stdlib.h>
+#include <chrono>
+#include <iostream>
+
+#define N 4096000000
 
 using namespace std;
 using namespace std::chrono;
 
-int main() {
-    const int n = 60000;
-    float h_A[n] = {1};
-    float h_B[n] = {2};
-    float h_C[n];
+float distance_main(float x1, float x2)
+{
+    return sqrt((x2-x1)*(x2-x1));
+}
 
-    // GPU
-    cuda_vec_add(h_A, h_B, h_C, n);
-    cout << "h_C[0] = " << h_C[0] << endl;
+float scale(uint32_t i, uint32_t n)
+{
+    return (float(i)) / (n-1);
+}
 
-    // CPU
-    auto beg_cpu = steady_clock::now();
-    for (int i = 0; i < n; i++){
-        h_C[i] = h_A[i] + h_B[i];
+int main()
+{
+    float *in = (float*)calloc(N, sizeof(float));
+    float *out = (float*)calloc(N, sizeof(float));
+    const float ref = 0.5f;
+
+    for (uint32_t i = 0; i < N; ++i)
+    {
+        in[i] = scale(i, N);
     }
-    auto end_cpu = steady_clock::now();
 
-    auto duration_us = std::chrono::duration_cast<std::chrono::microseconds>(end_cpu-beg_cpu).count();
-    cout << "Elapsed Time [CPU]: " << duration_us << " [us]" << endl;
+    auto beg_t_cuda = steady_clock::now();
+    distanceArray(out, in, ref, N);
+    auto end_t_cuda = steady_clock::now();
+    cout << "Elapsed Time [CUDA]: " << std::chrono::duration_cast<std::chrono::milliseconds>(end_t_cuda-beg_t_cuda).count()
+        << " [ms]" << endl;
+
+    auto beg_t_cpu = steady_clock::now();
+    for (uint32_t i = 0; i < N; ++i)
+    {
+        float res = distance_main(in[i], ref);
+    }
+    auto end_t_cpu = steady_clock::now();
+    cout << "Elapsed Time [CPU]: " << std::chrono::duration_cast<std::chrono::milliseconds>(end_t_cpu-beg_t_cpu).count()
+        << " [ms]" << endl;
+
+    free(in);
+    free(out);    
 
     return 0;
 }

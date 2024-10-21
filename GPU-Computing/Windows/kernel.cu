@@ -1,38 +1,36 @@
-// kernel.cu
 #include "kernel.h"
-#include <iostream>
-#include <cuda.h>
-#include <cuda_runtime.h>
-#include <chrono>
+#include <stdio.h>
 
-using namespace std;
-using namespace std::chrono;
+#define TPB 1024  // Threads per Block
 
-__global__ void vec_add_kernel(float *a, float *b, float *c, int n) {
-    int i = threadIdx.x + blockDim.x * blockIdx.x;
-    if (i < n) c[i] = a[i] + b[i];
+__device__
+float distance(float x1, float x2)
+{
+    return sqrt((x2-x1)*(x2-x1));
 }
 
-int cuda_vec_add(float *h_a, float *h_b, float *h_c, int n) {
-    float *d_a, *d_b, *d_c;
+__global__
+void distanceKernel(float *d_out, float *d_in, float ref)
+{
+    const int i = blockIdx.x*blockDim.x + threadIdx.x;
+    const float x = d_in[i];
+    d_out[i] = distance(x, ref);
+}
 
-    cudaMalloc(&d_a, n*sizeof(float));
-    cudaMalloc(&d_b, n*sizeof(float));
-    cudaMalloc(&d_c, n*sizeof(float));
+void distanceArray(float *out, float *in, float ref, unsigned long len)
+{
+    float *d_in = 0;
+    float *d_out = 0;
 
-    cudaMemcpy(d_a, h_a, n*sizeof(float), cudaMemcpyHostToDevice);
-    cudaMemcpy(d_b, h_b, n*sizeof(float), cudaMemcpyHostToDevice);
+    cudaMalloc(&d_in, len*sizeof(float));
+    cudaMalloc(&d_out, len*sizeof(float));
 
-    auto beg_cuda = steady_clock::now();
-    vec_add_kernel<<<1,1>>>(d_a, d_b, d_c, n);
-    auto end_cuda = steady_clock::now();
+    cudaMemcpy(d_in, in, len*sizeof(float), cudaMemcpyHostToDevice);
+    distanceKernel<<<len/TPB, TPB>>>(d_out, d_in, ref);
 
-    cout << "Elapsed Time [CUDA]: " << std::chrono::duration_cast<std::chrono::microseconds>(end_cuda-beg_cuda).count()
-        << " [us]" << endl;
+    cudaMemcpy(out, d_out, len*sizeof(float), cudaMemcpyDeviceToHost);
 
-    cudaMemcpy(h_c, d_c, n*sizeof(float), cudaMemcpyDeviceToHost);
-
-    cudaFree(d_a); cudaFree(d_b); cudaFree(d_c);
-
-    return 0;
+    cudaFree(d_in);
+    cudaFree(d_out);
+    
 }
