@@ -1,3 +1,6 @@
+#ifndef KERNEL_H
+#define KERNEL_H
 
+void distanceArray(float *out, float *in, float ref, unsigned long n);
 
-int cuda_vec_add(float *h_a, float *h_b, float *h_c, int n);
+#endif
