@@ -5,5 +5,5 @@
 
 # Results
 Elapsed Time [CUDA]: 6559 [ms]
----
+
 Elapsed Time [CPU]: 46620 [ms]
